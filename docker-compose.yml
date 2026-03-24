@@ -1,0 +1,25 @@
+
+version: '3.8'
+
+services:
+  backend:
+    build: 
+      context: ./jaydev-backend
+    container_name: jaydev-backend
+    ports:
+      - "5006:5006"
+    env_file:
+      - ./jaydev-backend/.env
+    volumes:
+      - ./jaydev-backend/storage:/app/storage
+    restart: always
+
+  admin:
+    build:
+      context: ./jaydev-Admin/Admin
+    container_name: jaydev-admin
+    ports:
+      - "5176:80"
+    depends_on:
+      - backend
+    restart: always
