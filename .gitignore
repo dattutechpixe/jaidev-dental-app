@@ -1,0 +1,28 @@
+# Node 
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Production
+dist/
+build/
+.env
+
+# Docker
+.dockerignore
+Dockerfile
+docker-compose.yml
+
+# IDE
+.vscode/
+.idea/
+.DS_Store
+
+# Local Storage (Very Important not to commit)
+jaydev-backend/storage/
+**/storage/
+**/.env
+**/node_modules/
+**/dist/
+**/build/
