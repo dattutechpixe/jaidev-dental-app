@@ -125,7 +125,7 @@ const AddBlog = () => {
       submissionData.append("sections", JSON.stringify(formData.sections));
       
       if (image) {
-        submissionData.append("files", image); // backend dynamicUpload expects "files" generally
+        submissionData.append("blogimage", image);
       }
 
       if (isEdit) {
