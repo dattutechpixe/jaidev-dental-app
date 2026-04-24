@@ -1,0 +1,1534 @@
+openapi: 3.0.0
+info:
+  title: Jai Dev Dental Admin API Documentation
+  version: 1.0.0
+  description: >
+    This documentation provides details about **Admin Authentication APIs** for Jai Dev Dental.  
+    It includes endpoints for signup, login, and protected route access using JWT authentication.
+  contact:
+    name: Techpixe Team
+    email: dattukumar@techpixe.com
+
+servers:
+  - url: http://localhost:5006
+    description: Local Development Server
+  - url: https://jdsapi.techportfolio.in
+    description: Production server
+    
+
+tags:
+  - name: Admin
+    description: Endpoints related to admin account creation, login, and authorization.
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    AdminSignupRequest:
+      type: object
+      required:
+        - firstname
+        - lastname
+        - email
+        - password
+      properties:
+        firstname:
+          type: string
+          example: Dattu
+        lastname:
+          type: string
+          example: Kumar
+        email:
+          type: string
+          format: email
+          example: admin1@example.com
+        password:
+          type: string
+          example: Admin@12345
+
+    AdminSignupResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        statuscode:
+          type: integer
+          example: 201
+        message:
+          type: string
+          example: Admin account created successfully
+
+    AdminLoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: admin1@test1.com
+        password:
+          type: string
+          example: Admin@12345
+
+    AdminLoginResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        statuscode:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: Login successful
+        JWTtoken:
+          type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        username:
+          type: string
+          example: Dattu Kumar
+        userID:
+          type: string
+          example: 6729e22d1e7a9f42ab12c5a1
+        role:
+          type: string
+          example: admin
+    Booking:
+      type: object
+      properties:
+        _id: { type: string }
+        category: { type: string }
+        rentalPeriod:
+          type: object
+          properties:
+            start: { type: string, format: date-time }
+            end: { type: string, format: date-time }
+        status:
+          type: string
+          enum:
+            - pending_payment
+            - paid
+            - paid_no_resource
+            - assigned
+            - in_progress
+            - completed
+            - cancelled
+            - refunded
+        resourceId:
+          $ref: "#/components/schemas/ResourceSummary"
+        payment:
+          type: object
+          properties:
+            orderId: { type: string }
+            paymentId: { type: string }
+            amount: { type: number }
+            status: { type: string }
+
+    ResourceSummary:
+      type: object
+      properties:
+        _id: { type: string }
+        name: { type: string }
+    Location:
+      type: object
+      properties:
+        type:
+          type: string
+          example: Point
+        coordinates:
+          type: array
+          items:
+            type: number
+          example: [77.59, 12.97]
+        address:
+          type: string
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        statuscode:
+          type: integer
+          example: 400
+        message:
+          type: string
+          example: Invalid request
+        status:
+          type: string
+          example: Bad Request
+
+security:
+  - bearerAuth: []
+
+paths:
+  /JaiDevDental/admin/signup:
+    post:
+      summary: Register a new admin account
+      tags: [Admin]
+      description: Creates a new admin in the system with hashed password and default `active` status.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminSignupRequest"
+      responses:
+        "201":
+          description: Admin created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminSignupResponse"
+        "400":
+          description: Missing or invalid fields
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Email already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /JaiDevDental/admin/login:
+    post:
+      summary: Admin login
+      tags: [Admin]
+      description: Authenticates an existing admin using email and password and returns a JWT token.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminLoginRequest"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminLoginResponse"
+        "401":
+          description: Unauthorized (invalid credentials)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Admin not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /JaiDevDental/admin/adminProfile:
+    post:
+      summary: Upload Admin Profile Picture
+      tags: [Admin]
+      description: Allows an authenticated admin to upload or update their profile picture.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                image:
+                  type: string
+                  format: binary
+                  description: The profile picture file to upload.
+      responses:
+        "200":
+          description: Profile picture uploaded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  statuscode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Profile picture uploaded successfully
+                  imageUrl:
+                    type: string
+                    example: https://res.cloudinary.com/your-cloud-name/image/upload/v1234567890/profile.jpg
+        "401":
+          description: Unauthorized (invalid or missing token)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /JaiDevDental/admin/updateAdminProfile:
+    patch:
+      summary: Update admin profile details
+      description: >
+        Update admin profile information like firstname, lastname, phone, or address.  
+        Only allowed fields are accepted.
+      tags:
+        - Admin
+      security:
+        - bearerAuth: [] # JWT token required
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                firstname:
+                  type: string
+                  example: Sneha
+                lastname:
+                  type: string
+                  example: Mitra
+                email:
+                  type: string
+                  example: snehamitra@example.com
+                
+      responses:
+        "200":
+          description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  statuscode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Profile updated successfully
+                  updatedData:
+                    type: object
+                    example:
+                      firstname: Sneha
+                      lastname: Mitra
+                      phone:  9876543210
+                      Address: "123, MG Road, Bengaluru, India"
+        "400":
+          description: Invalid request body
+        "401":
+          description: Unauthorized
+        "404":
+          description: Admin not found
+        "500":
+          description: Internal server error
+
+  /JaiDevDental/admin/updatePassword:
+    patch:
+      summary: Change Admin Password
+      tags: [Admin]
+      description: Allows an authenticated admin to change their password by providing the old and new passwords.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - oldpassword
+                - newpassword
+              properties:
+                oldpassword:
+                  type: string
+                  example: OldPass@123
+                newpassword:
+                  type: string
+                  example: NewPass@456
+      responses:
+        "200":
+          description: Password changed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  statuscode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Password changed successfully
+        "400":
+          description: Invalid request (e.g., missing fields)
+        "401":
+          description: Unauthorized (invalid or missing token)
+        "403":
+          description: Forbidden (old password does not match)
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      post:
+    summary: Set a new password for an admin
+    description: |
+      Allows an admin to set a new password after receiving a reset link via email. 
+      This endpoint also does **not require authentication** since it’s part of the password reset process.
+    tags:
+      - Admin Authentication
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              email:
+                type: string
+                format: email
+                example: admin@example.com
+              password:
+                type: string
+                format: password
+                example: NewStrongPassword123!
+            required:
+              - email
+              - password
+    responses:
+      "200":
+        description: Password updated successfully
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  example: true
+                statuscode:
+                  type: integer
+                  example: 200
+                message:
+                  type: string
+                  example: Password updated successfully, Please Login
+
+      "404":
+        description: Admin not found
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                statuscode:
+                  type: integer
+                  example: 404
+                status:
+                  type: string
+                  example: Not Found
+                message:
+                  type: string
+                  example: User not found
+      "500":
+        description: Internal Server Error
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                statuscode:
+                  type: integer
+                  example: 500
+                status:
+                  type: string
+                  example: Server Error
+                message:
+                  type: string
+                  example: Internal Server Error
+
+  /JaiDevDental/admin/adminsetNewPassword:
+    put:
+      summary: Set New Password for Admin
+      tags: [Admin]
+      description: Allows an admin to set a new password after initiating the forget password process.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: admin@example.com
+                password:
+                  type: string
+                  format: password
+                  example: NewStrongPassword123!
+      responses:
+        "200":
+          description: Password updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  statuscode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Password updated successfully, Please Login
+        "404":
+          description: Admin not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statuscode:
+                    type: integer
+                    example: 404
+                  status:
+                    type: string
+                    example: Not Found
+                  message:
+                    type: string
+                    example: User not found
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statuscode:
+                    type: integer
+                    example: 500
+                  status:
+                    type: string
+                    example: Server Error
+                  message:
+                    type: string
+                    example: Internal Server Error
+
+  /JaiDevDental/admin/getadminData:
+    get:
+      summary: Get Admin Data
+      tags: [Admin]
+      description: Retrieves the profile data of the authenticated admin.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Admin data retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  statuscode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Admin data retrieved successfully
+                  adminData:
+                    type: object
+                    example:
+                      firstname: Dattu
+                      lastname: Kumar
+                      email: dattu.kumar@example.com
+                      phone: 9876543210
+                      Address: "123, MG Road, Bengaluru, India"
+        "401":
+          description: Unauthorized (invalid or missing token)
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /JaiDevDental/admin/forgetPassword:
+    post:
+      summary: Admin Forget Password
+      tags: [Admin]
+      description: Allows an admin to initiate the password reset process by providing their registered email.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: dattu.kumar@example.com
+      responses:
+        "200":
+          description: Password reset email sent successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  statuscode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Password reset email sent successfully
+        "404":
+          description: Admin not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /JaiDevDental/blog/create:
+    post:
+      summary: Create Blog
+      tags: [Blog]
+      description: Allows an admin to create a new blog.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - category
+                - title
+                - description
+                - blogimage
+              properties:
+                category:
+                  type: string
+                  example: Dental Care
+                title:
+                  type: string
+                  example: My First Blog
+                description:
+                  type: string
+                  example: A short description of the blog.
+                sections:
+                  type: string
+                  description: JSON stringified array [{heading, bullets[], description}]
+                  example: '[{"heading":"Intro","bullets":["point1"],"description":"desc"}]'
+                conclusion:
+                  type: string
+                  example: Use our product for best results.
+                useofproduct:
+                  type: string
+                  example: Apply twice daily.
+                blogimage:
+                  type: string
+                  format: binary
+                  description: Blog image file (fieldname must be blogimage)
+      responses:
+        "200":
+          description: Blog created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  statuscode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Blog created successfully
+                  data:
+                    type: object
+        "400":
+          description: Bad Request (missing fields or invalid sections)
+        "401":
+          description: Unauthorized (invalid or missing token)
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /JaiDevDental/blog/allblogs:
+    get:
+      summary: Get All Blogs
+      tags: [Blog]
+      description: Retrieves all blogs with pagination.
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            example: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            example: 10
+      responses:
+        "200":
+          description: Blogs fetched successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  statuscode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Blogs fetched successfully
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        _id:
+                          type: string
+                          example: "60d5ec49f1c2b40015a3e8a1"
+                        title:
+                          type: string
+                          example: My First Blog
+                        description:
+                          type: string
+                          example: A short description.
+                        category:
+                          type: string
+                          example: Dental Care
+                        blogimage:
+                          type: string
+                          example: "https://example.com/images/blog.jpg"
+                        createdAt:
+                          type: string
+                          format: date-time
+                        updatedAt:
+                          type: string
+                          format: date-time
+                  total:
+                    type: integer
+                    example: 50
+                  totalpages:
+                    type: integer
+                    example: 5
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /JaiDevDental/blog/singleblog/{id}:
+    get:
+      summary: Get Single Blog
+      tags: [Blog]
+      description: Retrieves a single blog by its ID.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "60d5ec49f1c2b40015a3e8a1"
+      responses:
+        "200":
+          description: Blog retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  statuscode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Blog fetched successfully
+                  data:
+                    type: object
+                    properties:
+                      _id:
+                        type: string
+                      title:
+                        type: string
+                      description:
+                        type: string
+                      category:
+                        type: string
+                      blogimage:
+                        type: string
+                      sections:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            heading:
+                              type: string
+                            bullets:
+                              type: array
+                              items:
+                                type: string
+                            description:
+                              type: string
+                      recommendedProducts:
+                        type: string
+                      useofproduct:
+                        type: string
+                      views:
+                        type: integer
+                      createdAt:
+                        type: string
+                        format: date-time
+                      updatedAt:
+                        type: string
+                        format: date-time
+        "404":
+          description: Blog not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /JaiDevDental/blog/update/{id}:
+    patch:
+      summary: Update Blog
+      tags: [Blog]
+      description: Allows an admin to update an existing blog.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "60d5ec49f1c2b40015a3e8a1"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                category:
+                  type: string
+                  example: Updated Category
+                title:
+                  type: string
+                  example: Updated Blog Title
+                description:
+                  type: string
+                  example: Updated description.
+                sections:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      heading:
+                        type: string
+                      bullets:
+                        type: array
+                        items:
+                          type: string
+                      description:
+                        type: string
+                conclusion:
+                  type: string
+                  example: Updated conclusion.
+                useofproduct:
+                  type: string
+                  example: Updated usage.
+      responses:
+        "200":
+          description: Blog updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  statuscode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Blog updated successfully
+        "401":
+          description: Unauthorized (invalid or missing token)
+        "404":
+          description: Blog not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /JaiDevDental/blog/update/image/{id}:
+    post:
+      summary: Update Blog Image
+      tags: [Blog]
+      description: Allows an admin to update the image of an existing blog.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "60d5ec49f1c2b40015a3e8a1"
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - blogimage
+              properties:
+                blogimage:
+                  type: string
+                  format: binary
+                  description: New blog image file (fieldname must be blogimage)
+      responses:
+        "200":
+          description: Blog image updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  statuscode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Blog image updated successfully
+        "401":
+          description: Unauthorized (invalid or missing token)
+        "404":
+          description: Blog not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /JaiDevDental/blog/delete/{id}:
+    delete:
+      summary: Delete Blog
+      tags: [Blog]
+      description: Allows an admin to delete a blog.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "60d5ec49f1c2b40015a3e8a1"
+      responses:
+        "200":
+          description: Blog deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  statuscode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Blog deleted successfully
+        "401":
+          description: Unauthorized (invalid or missing token)
+        "404":
+          description: Blog not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /JaiDevDental/products/create:
+    post:
+      summary: Create Product
+      tags: [Products]
+      description: Allows an admin to create a new product.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - equipmentName
+
+                
+              properties:
+                equipmentName:
+                  type: string
+                  example: "Product Name"
+                equipmentdescription:
+                  type: string
+                  example: "Category"
+                description:
+                  type: string
+                  example: "Product Description"
+                features:
+                  type: string
+                  description: Comma-separated string or JSON array. e.g. feature1,feature2
+                  example: "feature1,feature2,feature3"
+                indications:
+                  type: string
+                  description: Comma-separated string or JSON array. e.g. indication1,indication2
+                  example: "indication1,indication2,indication3"
+                images:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: Multiple product image files (fieldname must be images)
+      responses:
+        "200":
+          description: Product created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  statuscode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Product created successfully
+        "401":
+          description: Unauthorized (invalid or missing token)
+        "404":
+          description: Product not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"             
+  /JaiDevDental/products/all:
+    get:
+      summary: Get All Products
+      tags: [Products]
+      description: Allows an admin to get all products.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Products fetched successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  statuscode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Products fetched successfully
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        _id:
+                          type: string
+                          example: "60d5ec49f1c2b40015a3e8a1"
+                        equipmentName:
+                          type: string
+                          example: "Product Name"
+                        equipmentdescription:
+                          type: string
+                          example: "Category"
+                        description:
+                          type: string
+                          example: "Product Description"
+                        features:
+                          type: array
+                          items:
+                            type: string
+                          example: ["feature1", "feature2", "feature3"]
+                        indications:
+                          type: array
+                          items:
+                            type: string
+                          example: ["indication1", "indication2", "indication3"]
+                        images:
+                          type: array
+                          items:
+                            type: string
+                          example: ["https://example.com/image.jpg"]
+                        createdAt:
+                          type: string
+                          format: date-time
+                          example: "2023-01-01T00:00:00.000Z"
+                        updatedAt:
+                          type: string
+                          format: date-time
+                          example: "2023-01-01T00:00:00.000Z"
+        "401":
+          description: Unauthorized (invalid or missing token)
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /JaiDevDental/products/update/{id}:
+    put:
+      summary: Update Product
+      tags: [Products]
+      description: Allows an admin to update an existing product.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "60d5ec49f1c2b40015a3e8a1"
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                equipmentName:
+                  type: string
+                  example: "Updated Product Name"
+                equipmentdescription:
+                  type: string
+                  example: "Updated Category"
+                description:
+                  type: string
+                  example: "Updated Product Description"
+                features:
+                  type: array
+                  items:
+                    type: string
+                  example: ["updated feature1", "updated feature2"]
+                indications:
+                  type: array
+                  items:
+                    type: string
+                  example: ["updated indication1", "updated indication2"]
+                images:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: Updated multiple product image files (fieldname must be images)
+      responses:
+        "200":
+          description: Product updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  statuscode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Product updated successfully
+        "401":
+          description: Unauthorized (invalid or missing token)
+        "404":
+          description: Product not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /JaiDevDental/products/delete/{id}:
+    delete:
+      summary: Delete Product
+      tags: [Products]
+      description: Allows an admin to delete a product.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "60d5ec49f1c2b40015a3e8a1"
+      responses:
+        "200":
+          description: Product deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  statuscode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Product deleted successfully
+        "401":
+          description: Unauthorized (invalid or missing token)
+        "404":
+          description: Product not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /JaiDevDental/products/{id}:
+    get:
+      summary: Get Single Product
+      tags: [Products]
+      description: Allows an admin to get a single product by ID.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "60d5ec49f1c2b40015a3e8a1"
+      responses:
+        "200":
+          description: Product fetched successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  statuscode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Product fetched successfully
+                  data:
+                    type: object
+                    properties:
+                      _id:
+                        type: string
+                        example: "60d5ec49f1c2b40015a3e8a1"
+                      equipmentName:
+                        type: string
+                        example: "Product Name"
+                      equipmentdescription:
+                        type: string
+                        example: "Category"
+                      description:
+                        type: string
+                        example: "Product Description"
+                      features:
+                        type: array
+                        items:
+                          type: string
+                        example: ["feature1", "feature2", "feature3"]
+                      indications:
+                        type: array
+                        items:
+                          type: string
+                        example: ["indication1", "indication2", "indication3"]
+                      images:
+                        type: array
+                        items:
+                          type: string
+                        example: ["https://example.com/image.jpg"]
+                      createdAt:
+                        type: string
+                        format: date-time
+                        example: "2023-01-01T00:00:00.000Z"
+                      updatedAt:
+                        type: string
+                        format: date-time
+                        example: "2023-01-01T00:00:00.000Z"
+        "401":
+          description: Unauthorized (invalid or missing token)
+        "404":
+          description: Product not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /JaiDevDental/banners/create:
+    post:
+      summary: Create Banner
+      tags: [Banners]
+      description: Allows an admin to create a new banner.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                heading:
+                  type: string
+                  example: "Banner Heading"
+                description:
+                  type: string
+                  example: "Banner Description"
+                images:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: Multiple banner image files (fieldname must be images)
+      responses:
+        "201":
+          description: Banner created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Banner created successfully
+        "401":
+          description: Unauthorized
+        "500":
+          description: Internal Server Error
+  /JaiDevDental/banners/all:
+    get:
+      summary: Get All Banners
+      tags: [Banners]
+      description: Returns a list of all banners.
+      responses:
+        "200":
+          description: Banners fetched successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        _id:
+                          type: string
+                        heading:
+                          type: string
+                        description:
+                          type: string
+                        images:
+                          type: array
+                          items:
+                            type: string
+  /JaiDevDental/banners/{id}:
+    get:
+      summary: Get Single Banner
+      tags: [Banners]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Banner found
+        "404":
+          description: Not found
+  /JaiDevDental/banners/update/{id}:
+    put:
+      summary: Update Banner
+      tags: [Banners]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                heading:
+                  type: string
+                description:
+                  type: string
+                images:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+      responses:
+        "200":
+          description: Updated successfully
+  /JaiDevDental/banners/delete/{id}:
+    delete:
+      summary: Delete Banner
+      tags: [Banners]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted successfully
+
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"

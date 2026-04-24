@@ -1,0 +1,89 @@
+openapi: 3.0.0
+info:
+  title: User API Documentation
+  description: API documentation for public data access (Products, Blogs, Banners)
+  version: 1.0.0
+
+servers:
+  # - url: http://localhost:5006
+  #   description: Local development server
+  - url: https://jdsapi.techportfolio.in
+    description: Production server
+
+tags:
+  - name: Products
+    description: Public product catalog
+  - name: Blogs
+    description: Public blog posts
+  - name: Banners
+    description: Public dynamic banners
+
+paths:
+  /JaiDevDental/users/products/all:
+    get:
+      summary: Get All Products
+      tags: [Products]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data: { type: array, items: { type: object } }
+  /JaiDevDental/users/products/{id}:
+    get:
+      summary: Get Single Product
+      tags: [Products]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+  /JaiDevDental/users/blogs/all:
+    get:
+      summary: Get All Blogs
+      tags: [Blogs]
+      responses:
+        "200":
+          description: OK
+ 
+  /JaiDevDental/users/blogs/{id}:
+    get:
+      summary: Get Single Blog
+      tags: [Blogs]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+  /JaiDevDental/users/banners/all:
+    get:
+      summary: Get All Banners
+      tags: [Banners]
+      responses:
+        "200":
+          description: OK
+  /JaiDevDental/users/banners/{id}:
+    get:
+      summary: Get Single Banner
+      tags: [Banners]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
